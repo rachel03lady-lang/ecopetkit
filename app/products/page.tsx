@@ -1,4 +1,5 @@
 
+import { Suspense } from "react";
 import {
   IndustryInsights,
   ProductPage,
@@ -7,7 +8,9 @@ import {
 export default function Product(){
     return (
       <main>
-        <ProductPage />
+        <Suspense fallback={<div>Loading...</div>}>
+          <ProductPage />
+        </Suspense>
         <IndustryInsights />
         <ProductFAQ />
       </main>
