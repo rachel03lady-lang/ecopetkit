@@ -236,7 +236,7 @@ export interface Product {
   faq?: ProductFaqItem[];
 
   //bottom CTA
-  bottomCTA?: BottomCTA;
+  BottomCTA?: BottomCTA;
 
   /* ======================
    * SEO (detail page)

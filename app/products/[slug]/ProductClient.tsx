@@ -691,19 +691,19 @@ const relatedProducts = getRelatedProducts(product, allProducts, 3);
       <div className="bg-slate-900 text-white py-16 text-center">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold mb-4">
-            {product.bottomCTA?.heading}
+            {product.BottomCTA?.heading}
           </h2>
           <p className="text-slate-400 mb-8 max-w-xl mx-auto">
-            {product.bottomCTA?.description}
+            {product.BottomCTA?.description}
           </p>
           <Button
             size="lg"
             variant="white"
             onClick={() =>
-              router.push(product?.bottomCTA?.buttonHref || "/contact")
+              router.push(product?.BottomCTA?.buttonHref || "/contact")
             }
           >
-            {product.bottomCTA?.buttonLabel}
+            {product.BottomCTA?.buttonLabel}
           </Button>
         </div>
       </div>
