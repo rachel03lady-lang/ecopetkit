@@ -65,7 +65,7 @@ export interface OemCustomization {
 // =======================
 // Bottom CTA (Reusable)
 // =======================
-export interface bottom_CTA {
+export interface BottomCTA {
   heading: string;
   description: string;
   buttonLabel: string;
@@ -180,7 +180,7 @@ export interface Product {
    * Video section (optional)
    * ====================== */
   video?: ProductVideo;
-  
+
   /* ======================
    * Certifications / tags
    * ====================== */
@@ -236,7 +236,7 @@ export interface Product {
   faq?: ProductFaqItem[];
 
   //bottom CTA
-  bottom_CTA?: bottom_CTA;
+  bottomCTA?: BottomCTA;
 
   /* ======================
    * SEO (detail page)

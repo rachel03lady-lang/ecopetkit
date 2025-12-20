@@ -234,7 +234,7 @@ export const PRODUCTS_DATA: Record<Language, Product[]> = {
           "private label pet feeder",
         ],
       },
-      bottom_CTA: {
+      bottomCTA: {
         heading: "Ready to launch this product?",
         description:
           "Get a competitive quote within 24 hours. We support low MOQ for trial orders.",
@@ -396,7 +396,7 @@ export const PRODUCTS_DATA: Record<Language, Product[]> = {
           "odor-free litter box",
         ],
       },
-      bottom_CTA: {
+      bottomCTA: {
         heading: "Ready to launch this product?",
         description:
           "Get a competitive quote within 24 hours. We support low MOQ for trial orders.",
@@ -572,7 +572,7 @@ export const PRODUCTS_DATA: Record<Language, Product[]> = {
           "private label pet feeder",
         ],
       },
-      bottom_CTA: {
+      bottomCTA: {
         heading: "Ready to launch this product?",
         description:
           "Get a competitive quote within 24 hours. We support low MOQ for trial orders.",
@@ -734,7 +734,7 @@ export const PRODUCTS_DATA: Record<Language, Product[]> = {
           "odor-free litter box",
         ],
       },
-      bottom_CTA: {
+      bottomCTA: {
         heading: "Ready to launch this product?",
         description:
           "Get a competitive quote within 24 hours. We support low MOQ for trial orders.",
@@ -910,7 +910,7 @@ export const PRODUCTS_DATA: Record<Language, Product[]> = {
           "private label pet feeder",
         ],
       },
-      bottom_CTA: {
+      bottomCTA: {
         heading: "Ready to launch this product?",
         description:
           "Get a competitive quote within 24 hours. We support low MOQ for trial orders.",
@@ -1072,7 +1072,7 @@ export const PRODUCTS_DATA: Record<Language, Product[]> = {
           "odor-free litter box",
         ],
       },
-      bottom_CTA: {
+      bottomCTA: {
         heading: "Ready to launch this product?",
         description:
           "Get a competitive quote within 24 hours. We support low MOQ for trial orders.",
@@ -1248,7 +1248,7 @@ export const PRODUCTS_DATA: Record<Language, Product[]> = {
           "private label pet feeder",
         ],
       },
-      bottom_CTA: {
+      bottomCTA: {
         heading: "Ready to launch this product?",
         description:
           "Get a competitive quote within 24 hours. We support low MOQ for trial orders.",
@@ -1410,7 +1410,7 @@ export const PRODUCTS_DATA: Record<Language, Product[]> = {
           "odor-free litter box",
         ],
       },
-      bottom_CTA: {
+      bottomCTA: {
         heading: "Ready to launch this product?",
         description:
           "Get a competitive quote within 24 hours. We support low MOQ for trial orders.",

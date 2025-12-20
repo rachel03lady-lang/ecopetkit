@@ -1,9 +1,7 @@
 
 import { BottomCTA, Language } from "@/types/types";
 
-export const PRODUCT_BOTTOM_CTA: Record<Language, Record<string, BottomCTA>>;
-
-export const PRODUCT_BOTTOM_CTA = {
+export const PRODUCT_BOTTOM_CTA: Record<Language, BottomCTA> = {
   en: {
     heading: "Ready to launch this product?",
     description:
