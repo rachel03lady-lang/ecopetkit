@@ -1,0 +1,33 @@
+
+import { BottomCTA, Language } from "@/types/types";
+
+export const PRODUCT_BOTTOM_CTA: Record<Language, Record<string, BottomCTA>>;
+
+export const PRODUCT_BOTTOM_CTA = {
+  en: {
+    heading: "Ready to launch this product?",
+    description:
+      "Get a competitive quote within 24 hours. We support low MOQ for trial orders.",
+    buttonLabel: "Inquire Now",
+    buttonHref: "/contact",
+  },
+  de: {
+    heading: "Bereit, dieses Produkt zu starten?",
+    description:
+      "Erhalten Sie innerhalb von 24 Stunden ein wettbewerbsfähiges Angebot.",
+    buttonLabel: "Anfrage senden",
+    buttonHref: "/contact",
+  },
+  fr: {
+    heading: "Prêt à lancer ce produit ?",
+    description: "Obtenez un devis compétitif sous 24 heures.",
+    buttonLabel: "Demander un devis",
+    buttonHref: "/contact",
+  },
+  es: {
+    heading: "¿Listo para lanzar este producto?",
+    description: "Obtenga una cotización competitiva en 24 horas.",
+    buttonLabel: "Solicitar cotización",
+    buttonHref: "/contact",
+  },
+};
