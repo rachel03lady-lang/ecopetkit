@@ -21,7 +21,7 @@ const BlogSidebar: React.FC<Props> = ({ post }) => {
           <div className="flex flex-wrap gap-2">
             {post.tags.map((tag) => (
               <Link
-                href={`/blog/tags/${tag.toLowerCase().replace(/ /g, '-')}`}
+                href={`/${language}/blog/tags/${tag.toLowerCase().replace(/ /g, '-')}`}
                 key={tag}
                 className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm hover:bg-slate-200"
               >
@@ -42,7 +42,7 @@ const BlogSidebar: React.FC<Props> = ({ post }) => {
 
               return (
                 <Link
-                  href={`/products/${product.slug}`}
+                  href={`/${language}/products/${product.slug}`}
                   key={product.slug}
                   className="flex items-center gap-4 group"
                 >

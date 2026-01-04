@@ -1,11 +1,10 @@
-"use client"
+"use client";
 import CategoriesWidget from "@/components/blog/blogPage/sidebar-col/categoriesWidget/CategoriesWidget";
 import NewsletterWidget from "@/components/blog/blogPage/sidebar-col/newsletterWidget/NewsletterWidget";
 import RecentPostWidget from "@/components/blog/blogPage/sidebar-col/recentPostWidget/RecentPostWidget";
 import SearchWidget from "@/components/blog/blogPage/sidebar-col/searchWidget/SearchWidget";
 import TagsCloudWidget from "@/components/blog/blogPage/sidebar-col/tagsCloudWidget/TagsCloudWidget";
 import { BlogPost } from "@/types/blogType";
-import { useLanguage } from "@/app/providers/LanguageProvider";
 import { BLOG_PAGE_CONTENT } from "@/constants/blogpage";
 
 type CategoryOption = { slug: string; name: string };
@@ -18,6 +17,7 @@ type Props = {
   setActiveCategory: (v: string) => void;
   recentPosts: BlogPost[];
   tags: string[];
+  lang: string;
 };
 const SidebarCol: React.FC<Props> = ({
   searchQuery,
@@ -27,17 +27,16 @@ const SidebarCol: React.FC<Props> = ({
   setActiveCategory,
   recentPosts,
   tags,
+  lang,
 }) => {
-     const { language } = useLanguage();
-     const pageContent = BLOG_PAGE_CONTENT[language];
+  const pageContent = BLOG_PAGE_CONTENT[lang];
   return (
     <div className="space-y-8">
       <SearchWidget
         value={searchQuery}
         onChange={setSearchQuery}
-        searchTitle ={pageContent.sidebar.searchTitle}
+        searchTitle={pageContent.sidebar.searchTitle}
         searchPlaceholder={pageContent.sidebar.searchPlaceholder}
-        
       />
 
       <CategoriesWidget
@@ -47,9 +46,17 @@ const SidebarCol: React.FC<Props> = ({
         categoryTitle={pageContent.sidebar.categoriesTitle}
       />
 
-      <RecentPostWidget posts={recentPosts} recentPostTitle={pageContent.sidebar.recentPostsTitle} />
+      <RecentPostWidget
+        posts={recentPosts}
+        recentPostTitle={pageContent.sidebar.recentPostsTitle}
+        lang={lang}
+      />
 
-      <TagsCloudWidget tags={tags} popular={pageContent.sidebar.tagsTitle} />
+      <TagsCloudWidget
+        tags={tags}
+        popular={pageContent.sidebar.tagsTitle}
+        lang={lang}
+      />
 
       <NewsletterWidget newsletterObj={pageContent.sidebar.newsletter} />
     </div>

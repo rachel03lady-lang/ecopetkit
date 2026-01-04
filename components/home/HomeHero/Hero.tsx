@@ -1,28 +1,71 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { HERO_SLIDES } from "@/constants/constants";
 import { Button } from "@/components/Button";
-  import { useLanguage } from "@/app/providers/LanguageProvider";
 import { useRouter } from "next/navigation";
 
-export default function Hero() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const { language, t } = useLanguage();
-  const slides = HERO_SLIDES[language];
-  const router = useRouter();
 
+
+type WPNodeUri={
+  uri:string;
+};
+
+interface PageNode extends WPNodeUri{
+  __typename:"Page";
+}
+
+interface PostNode extends WPNodeUri{
+  __typename:"Post";
+}
+
+interface CTASecondaryHref {
+  nodes:(PageNode | PostNode)[];
+}
+
+interface CTAPrimaryHref {
+  node:(PageNode | PostNode)[];
+}
+
+interface HeroProps {
+  banner:{
+    tagline:string;
+    title:string;
+    subtitle:string;
+    image:{
+      node:{
+                 sourceUrl:string;
+                  altText:string;
+                  title:string;
+                  caption:string;
+                  description:string;
+    }
+
+        }
+    ctaPrimaryLabel:string;
+    ctaPrimaryUrl: CTAPrimaryHref;
+    ctaSecondaryLabel :string
+    ctaSecondaryHref :CTASecondaryHref;
+
+}[];
+}
+
+export default function Hero({banner}:HeroProps) {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const router = useRouter();
   useEffect(() => {
+    if (banner.length === 0) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      setCurrentSlide((prev) => (prev + 1) % banner.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [banner.length]);
+  
+  // Use a fallback for the text while the UI object is loading.
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-primary">
-      {slides.map((slide, index) => (
+      {banner?.map((slide, index) => (
         <div
-          key={slide.id}
+          key={index}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
             index === currentSlide ? "opacity-100" : "opacity-0"
           }`}
@@ -30,7 +73,7 @@ export default function Hero() {
           <div
             className="absolute inset-0 bg-cover bg-center transform scale-105 transition-transform duration-[10000ms]"
             style={{
-              backgroundImage: `url(${slide.bgImage})`,
+              backgroundImage: `url(${slide.image.node.sourceUrl})`,
               transformOrigin: "center center",
             }}
           />
@@ -39,13 +82,13 @@ export default function Hero() {
           <div className="relative h-full container mx-auto px-6 flex flex-col justify-center items-start text-white">
             <div className="max-w-3xl space-y-8 animate-fade-in-up">
               <span className="inline-block px-3 py-1 border border-white/30 rounded-full text-xs font-bold uppercase tracking-widest backdrop-blur-sm">
-                {t("hero.premier")}
+                {slide.tagline}
               </span>
               <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-                {slide.headline}
+                {slide.title}
               </h1>
               <p className="text-xl md:text-2xl text-gray-200 max-w-2xl font-light leading-relaxed">
-                {slide.subhead}
+                {slide.subtitle}
               </p>
               <div className="pt-8 flex gap-4">
                 <Button
@@ -53,7 +96,7 @@ export default function Hero() {
                   size="lg"
                   onClick={() => router.push("/contact")}
                 >
-                  {slide.cta}
+                  {slide.ctaPrimaryLabel}
                 </Button>
                 <Button
                   variant="outline"
@@ -61,7 +104,7 @@ export default function Hero() {
                   className="text-white border-white hover:bg-white/10"
                   onClick={() => router.push("/products")}
                 >
-                  {t("hero.viewProducts")}
+                  {slide.ctaSecondaryLabel}
                 </Button>
               </div>
             </div>
@@ -70,7 +113,7 @@ export default function Hero() {
       ))}
 
       <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-3">
-        {slides.map((_, idx) => (
+        {banner.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setCurrentSlide(idx)}

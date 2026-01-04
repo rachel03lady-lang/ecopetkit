@@ -7,3 +7,44 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+.prose .wp-block-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 Columns on Mobile */
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0;
+}
+
+@media (min-width: 768px) {
+  .prose .wp-block-gallery {
+    grid-template-columns: repeat(3, 1fr); /* 3 Columns on Desktop */
+  }
+  
+  /* Respect WordPress column classes if available */
+  .prose .wp-block-gallery.columns-1 { grid-template-columns: 1fr; }
+  .prose .wp-block-gallery.columns-2 { grid-template-columns: repeat(2, 1fr); }
+  .prose .wp-block-gallery.columns-3 { grid-template-columns: repeat(3, 1fr); }
+  .prose .wp-block-gallery.columns-4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Fix individual images inside the gallery */
+.prose .wp-block-gallery .wp-block-image {
+  margin: 0 !important; /* Override prose default margins */
+  width: 100%;
+}
+
+.prose .wp-block-gallery img {
+  width: 100% !important;
+  height: 250px !important; /* Force uniform height for neat grid */
+  object-fit: cover;        /* Crop image to fill the square/rectangle */
+  border-radius: 0.75rem;   /* Rounded corners */
+  margin: 0 !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Hide default captions in grid to save space (optional) */
+.prose .wp-block-gallery figcaption {
+  display: none; 
+}

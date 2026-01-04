@@ -5,13 +5,14 @@ import CardBlogs from "@/components/blog/blogPage/mainContentCol/blog-card/CardB
 
 type Props = {
   posts: BlogPost[];
+  lang: string;
 };
-const MainContentCol: React.FC<Props> = ({ posts }) => {
+const MainContentCol: React.FC<Props> = ({ posts, lang }) => {
   return (
     <div className="lg:w-2/3">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {posts.map((post) => (
-          <CardBlogs key={post.id} post={post} />
+          <CardBlogs key={post.id} post={post} lang={lang} />
         ))}
       </div>
       {/* paggination */}

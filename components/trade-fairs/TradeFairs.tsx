@@ -1,13 +1,15 @@
 "use client";
 
 import { Section } from "@/components/Section";
-import { useLanguage } from "@/app/providers/LanguageProvider";
-import { TRADE_FAIRS_CONTENT } from "@/constants/constants";
+import type { TradeFairsPageContent } from "@/types/tradeFairs";
 import { Calendar, MapPin, Store } from "lucide-react";
 
-export default function TradeFairs() {
-  const { language } = useLanguage();
-  const data = TRADE_FAIRS_CONTENT[language];
+interface Props {
+  data: TradeFairsPageContent;
+}
+
+export default function TradeFairs({ data }: Props) {
+  console.log("trade fairs", data);
 
   return (
     <div className="pt-20">
@@ -18,24 +20,24 @@ export default function TradeFairs() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {data.items.map((fair) => (
+          {data.items.map((fair, idx) => (
             <div
-              key={fair.id}
+              key={idx}
               className={`rounded-xl overflow-hidden border ${
                 fair.status === "upcoming"
                   ? "border-accent shadow-lg ring-1 ring-accent/20"
                   : "border-slate-200"
               } bg-white flex flex-col`}
             >
-              <div className="relative aspect-video bg-slate-100">
+              <div className="relative aspect-video h-[250px] bg-slate-100">
                 <img
-                  src={fair.image}
-                  alt={fair.name}
+                  src={fair.image?.node?.sourceUrl}
+                  alt={fair.image?.node?.altText}
                   className="w-full h-full object-cover"
                 />
-                {fair.status === "upcoming" && (
+                {fair.status[0] === "upcoming" && (
                   <div className="absolute top-4 right-4 bg-accent text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                    UPCOMING
+                    {fair.status[0]}
                   </div>
                 )}
               </div>

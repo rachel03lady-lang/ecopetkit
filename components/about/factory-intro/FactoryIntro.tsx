@@ -1,19 +1,27 @@
 "use client";
 import { Factory } from "lucide-react";
-import { ABOUT_CONTENT } from "@/constants/about";
-import { useLanguage } from "@/app/providers/LanguageProvider";
 
-export default function FactoryIntro()
+type FactoryIntroProps ={
+  data?:{
+        badge?: string | null;
+        title?: string | null;
+        subtitle?: string | null;
+        backgroundImage?: {node?: any }| null;
+  }
+}
+
+export default function FactoryIntro({data}:FactoryIntroProps)
 {
-const {language} = useLanguage();
-const { badge , title, subtitle, backgroundImage} = ABOUT_CONTENT[language].factoryHero;
+  if(!data) return;
+console.log("factoryIntoProps", data);
+const { title, subtitle, badge, backgroundImage } = data;
 
 return (
   <div className="relative h-[60vh] md:h-[60vh] w-full overflow-hidden bg-slate-900 flex items-center mt-0">
     <div
       className="absolute inset-0 bg-cover bg-center"
       style={{
-        backgroundImage:`url(${backgroundImage})`
+        backgroundImage: `url(${backgroundImage?.node?.sourceUrl})`,
       }}
     />
     <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/80 to-transparent" />

@@ -55,19 +55,20 @@ const BlogPage: React.FC = () => {
     <div className="container mx-auto px-6 max-w-7xl py-12">
       <div className="flex flex-col lg:flex-row gap-12">
         <div className="lg:w-2/3">
-          <MainContentCol posts={filteredPosts} />
-        </div>
-        <div className="lg:w-1/3 space-y-8">
-          <SidebarCol
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            categories={categories}
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-            recentPosts={recentPosts}
-            tags={tags}
-          />
-        </div>
+                  <MainContentCol posts={filteredPosts} lang={language} />
+                </div>
+                <div className="lg:w-1/3 space-y-8">
+                  <SidebarCol
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    categories={categories}
+                    activeCategory={activeCategory}
+                    setActiveCategory={setActiveCategory}
+                    recentPosts={recentPosts}
+                    tags={tags}
+                    lang={language}
+                  />
+                </div>
       </div>
     </div>
   );

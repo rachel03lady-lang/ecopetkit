@@ -1,21 +1,21 @@
-"use client"
+"use client";
 import { BlogPost } from "@/types/blogType";
 import { Calendar, User, Tag, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
-
 type Props = {
   post: BlogPost;
+  lang: string;
 };
 
-const CardBlogs: React.FC<Props> = ({ post }) => {
-    const [dateLabel, setDateLabel] = useState("");
-    useEffect(() => {
-        if (post.publishedAt) {
-            setDateLabel(new Date(post.publishedAt).toLocaleDateString());
-        }
-    }, [post.publishedAt]);
+const CardBlogs: React.FC<Props> = ({ post, lang }) => {
+  const [dateLabel, setDateLabel] = useState("");
+  useEffect(() => {
+    if (post.publishedAt) {
+      setDateLabel(new Date(post.publishedAt).toLocaleDateString());
+    }
+  }, [post.publishedAt]);
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-100 flex flex-col group h-full">
       <div className="aspect-[16/10] relative overflow-hidden">
@@ -47,7 +47,7 @@ const CardBlogs: React.FC<Props> = ({ post }) => {
         </p>
 
         <Link
-          href={`/blog/${post.slug}`}
+          href={`/${lang}/blog/${post.slug}`}
           className="text-slate-900 font-bold text-sm flex items-center gap-2 hover:gap-3 transition-all mt-auto group/btn"
         >
           Read More{" "}

@@ -1,5 +1,6 @@
 
 import { BottomCTA, Language } from "@/types/types";
+import { Heading } from "lucide-react";
 
 export const PRODUCT_BOTTOM_CTA: Record<Language, BottomCTA> = {
   en: {
@@ -29,3 +30,76 @@ export const PRODUCT_BOTTOM_CTA: Record<Language, BottomCTA> = {
     buttonHref: "/contact",
   },
 };
+
+
+
+allBlogsPage{
+  en-us{ 
+headers{
+  tagline
+  Heading
+  subtitle
+}
+categoriesLabel
+searchLabel
+popularTagsLabel
+recentPostLabel
+newsletter{
+title
+description
+emailPlaceholder
+buttonLabel
+}
+  }
+  es{ 
+headers{
+  tagline
+  Heading
+  subtitle
+}
+categoriesLabel
+searchLabel
+popularTagsLabel
+recentPostLabel
+newsletter{
+title
+description
+emailPlaceholder
+buttonLabel
+}
+  }
+  de{ 
+headers{
+  tagline
+  Heading
+  subtitle
+}
+categoriesLabel
+searchLabel
+popularTagsLabel
+recentPostLabel
+newsletter{
+title
+description
+emailPlaceholder
+buttonLabel
+}
+  }
+  fr{ 
+headers{
+  tagline
+  Heading
+  subtitle
+}
+categoriesLabel
+searchLabel
+popularTagsLabel
+recentPostLabel
+newsletter{
+title
+description
+emailPlaceholder
+buttonLabel
+}
+  }
+}

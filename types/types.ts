@@ -475,39 +475,6 @@ export interface MarketingSection {
 
 
 
-// export type ProductItem = {
-//   // base (language-agnostic)
-//   id: string;
-//   category: string; // key, not translated label
-//   image: string;
-//   gallery?: string[];
-//   detailImages?: string[];
-//   tags?: ("hot" | "general")[];
-
-//   // localized (injected via PRODUCT_TRANSLATIONS)
-//   name?: string;
-//   tagline?: string;
-//   description?: string;
-//   features?: string[];
-//   oemOptions?: string[];
-//   whatsInTheBox?: string[];
-
-//   marketingSections?: {
-//     title: string;
-//     content: string;
-//     image?: string;
-//     imageAlign?: "left" | "right";
-//   }[];
-
-//   faq?: {
-//     question: string;
-//     answer: string;
-//   }[];
-
-//   specs: ProductSpec;
-// };
-
-
 
 export interface ProcessStep {
   number: string;
