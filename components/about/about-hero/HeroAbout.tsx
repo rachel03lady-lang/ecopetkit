@@ -1,7 +1,5 @@
 "use client";
 import { Section } from "@/components/Section";
-import { ABOUT_CONTENT } from "@/constants/about";
-import { useLanguage } from "@/app/providers/LanguageProvider";
 
 type HeroProps = {
   data?: {

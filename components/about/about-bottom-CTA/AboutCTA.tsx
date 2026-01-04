@@ -1,7 +1,5 @@
 "use client";
 import { Button } from "@/components/Button";
-import { ABOUT_CONTENT } from "@/constants/about";
-import { useLanguage } from "@/app/providers/LanguageProvider";
 import { useRouter } from "next/navigation";
 
 type CTAProps = {

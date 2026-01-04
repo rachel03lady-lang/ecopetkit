@@ -1,7 +1,0 @@
-query SiteTranslations { pageBy(uri: "site-translations") { title uri siteTranslations { uiText { en { navigationMenu { homeMenuItem { label href } servicesMenuItem { label href } productsMenuItem { label href } aboutMenuItem { label href } downloadsMenuItem { label href } tradefairsMenuItem { label href } blogMenuItem { label href } faqMenuItem { label href } contactMenuItem { label href } } } de { navigationMenu { homeMenuItem { label href } servicesMenuItem { label href } productsMenuItem { label href } aboutMenuItem { label href } downloadsMenuItem { label href } tradefairsMenuItem { label href } blogMenuItem { label href } faqMenuItem { label href } contactMenuItem { label href } } } fr { navigationMenu { homeMenuItem { label href } servicesMenuItem { label href } productsMenuItem { label href } aboutMenuItem { label href } downloadsMenuItem { label href } tradefairsMenuItem { label href } blogMenuItem { label href } faqMenuItem { label href } contactMenuItem { label href } } } 
-es { navigationMenu { 
-    homeMenuItem { label href } 
-    servicesMenuItem { label href } 
-    productsMenuItem { label href } 
-    aboutMenuItem { label href } 
-    downloadsMenuItem { label href } tradefairsMenuItem { label href } blogMenuItem { label href } faqMenuItem { label href } contactMenuItem { label href } } } } } } }

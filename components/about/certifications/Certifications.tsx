@@ -1,7 +1,5 @@
 "use client";
 import { Award } from "lucide-react";
-import { ABOUT_CONTENT } from "@/constants/about";
-import { useLanguage } from "@/app/providers/LanguageProvider";
 
 type Props = {
   data?: { label?: string | null }[] | null;
