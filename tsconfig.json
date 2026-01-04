@@ -30,6 +30,6 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     "components/products/product-page/ProductPage-bak.tsx"
-  ],
+, "components/blog/blogPage/BlogPage.tsx.bak", "components/blog/header/BlogHeader.tsx.bak"  ],
   "exclude": ["node_modules"]
 }
