@@ -1,8 +1,6 @@
 // app/contact/page.tsx
 
 
-import { useLanguage } from "@/app/providers/LanguageProvider";
-import { CONTACT_PAGE_CONTENT } from "@/constants/contact";
 import { getContactPage } from "@/lib/getContactPage";
 import { Metadata } from "next";
 import ContactPage from "@/components/contact/ContactPage";
