@@ -1,3 +1,5 @@
+// app/[lang]/blog/[slug]/page.tsx
+
 import { getPostBySlug } from "@/lib/wordpress";
 import { notFound } from "next/navigation";
 import { Calendar, User, Tag, ArrowLeft } from "lucide-react";
@@ -11,31 +13,69 @@ type Props = {
   };
 };
 
-// Generate SEO Metadata
+// 1. UPDATED DYNAMIC METADATA
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  // FIX 1: Pass params.lang as the second argument
   const { post } = await getPostBySlug(params.slug, params.lang);
 
   if (!post) return {};
 
+  const seo = post.seo || {};
+  const og = seo.openGraph || {};
+
+  // Logic: Check if 'robots' array contains "noindex"
+  const robotsArray = seo.robots || [];
+  const isNoIndex = robotsArray.includes("noindex");
+  const isNoFollow = robotsArray.includes("nofollow");
+
+  // Fallback values
+  const title = seo.title || post.title;
+  const description =
+    seo.description || post.excerpt?.replace(/<[^>]+>/g, "") || "";
+  const imageUrl = og.image?.url || post.featuredImage?.node?.sourceUrl;
+
   return {
-    title: post.seo?.title || post.title,
-    description:
-      post.seo?.description || post.excerpt?.replace(/<[^>]+>/g, "") || "",
+    title: title,
+    description: description,
+    alternates: {
+      canonical: seo.canonicalUrl,
+    },
+    robots: {
+      index: !isNoIndex,
+      follow: !isNoFollow,
+      googleBot: {
+        index: !isNoIndex,
+        follow: !isNoFollow,
+      },
+    },
+    openGraph: {
+      title: og.title || title,
+      description: og.description || description,
+      url: og.url || seo.canonicalUrl,
+      siteName: og.siteName,
+      locale: og.locale || params.lang,
+      type: "article",
+      images: imageUrl ? [{ url: imageUrl }] : [],
+    },
+    // Twitter Fallback (Using OG data)
+    twitter: {
+      card: "summary_large_image",
+      title: og.title || title,
+      description: og.description || description,
+      images: imageUrl ? [imageUrl] : [],
+    },
   };
 }
 
 export default async function SingleBlogPage({ params }: Props) {
-  // FIX 2: Pass params.lang as the second argument
   const data = await getPostBySlug(params.slug, params.lang);
 
-  // Helper: Handle if data is null or undefined
   if (!data || !data.post) {
     notFound();
   }
 
   const { post } = data;
 
+  // ... (Keep the rest of your component JSX exactly the same) ...
   return (
     <article className="pt-24 bg-slate-50 min-h-screen pb-20">
       <div className="container mx-auto px-6 max-w-4xl">

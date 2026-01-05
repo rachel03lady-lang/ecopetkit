@@ -1,35 +1,30 @@
+// lib/getProduct.ts
+
 // Get the base WordPress URL from environment variables and clean it.
 const WP_BASE_URL = (
-  process.env.NEXT_PUBLIC_WP_GRAPHQL_URL || "https://admin.ecopetkit.com/graphql"
-).replace(/\/graphql\/?$/, ""); // Remove /graphql suffix
-const WP_API_URL = `${WP_BASE_URL}/graphql`; // The final, clean GraphQL endpoint.
+  process.env.NEXT_PUBLIC_WP_GRAPHQL_URL ||
+  "https://admin.ecopetkit.com/graphql"
+).replace(/\/graphql\/?$/, "");
+const WP_API_URL = `${WP_BASE_URL}/graphql`;
 
-/**
- * Generates a prioritized list of potential URIs for finding a product.
- * @param lang The language code (e.g., 'en', 'de').
- * @param slug The product's slug.
- * @returns An array of URI strings to try in order.
- */
 function getProductUriCandidates(lang: string, slug: string): string[] {
   const normalizedLang = (lang || "").toLowerCase();
   const candidates = new Set<string>();
+  const productPostTypes = ["product", "products"];
 
-  const productPostTypes = ["product", "products"]; // Common post type slugs
-
-  // For non-English languages, prioritize the language-prefixed URI.
+  // Language specific URIs
   if (normalizedLang && normalizedLang !== "en" && normalizedLang !== "en-us") {
     for (const postType of productPostTypes) {
       candidates.add(`/${normalizedLang}/${postType}/${slug}/`);
     }
   }
 
-  // Always add the default/English URIs as the primary or fallback option.
-  // This is crucial for both English pages and for finding cross-language linked products.
+  // Default URIs
   for (const postType of productPostTypes) {
     candidates.add(`/${postType}/${slug}/`);
   }
-  
-  // Add a final, absolute fallback for the slug alone.
+
+  // Absolute fallback
   candidates.add(`/${slug}/`);
 
   return Array.from(candidates);
@@ -42,7 +37,7 @@ export async function getProduct(lang: string, slug: string) {
   }
 
   const candidateURIs = getProductUriCandidates(lang, slug);
-  
+
   const query = `
     query GetProductByUri($uri: String!) {
       productBy(uri: $uri) {
@@ -51,7 +46,26 @@ export async function getProduct(lang: string, slug: string) {
         slug
         uri
         language { code locale }
-        seo { title description }
+        
+        # --- FIXED SEO BLOCK (Matches RankMath Schema) ---
+        seo { 
+          title 
+          description
+          canonicalUrl
+          focusKeywords
+          robots 
+          openGraph {
+            title
+            description
+            url
+            siteName
+            locale
+            image {
+              url
+            }
+          }
+        }
+
         productCategories { nodes { name slug } }
         featuredImage { node { sourceUrl altText } }
         
@@ -113,7 +127,7 @@ export async function getProduct(lang: string, slug: string) {
     }
   `;
 
-  // Loop through candidates and try to fetch the product until found.
+  // Loop through candidates
   for (const uri of candidateURIs) {
     try {
       const res = await fetch(WP_API_URL, {
@@ -123,26 +137,22 @@ export async function getProduct(lang: string, slug: string) {
         next: { revalidate: 60 },
       });
 
-      if (!res.ok) {
-        continue; // Don't stop, just try the next URI
-      }
+      if (!res.ok) continue;
 
       const json = await res.json();
       const product = json?.data?.productBy;
 
       if (product) {
-        console.log(`Success: Found product for slug "${slug}" with URI: ${uri}`);
-        return product; // Found it, return immediately.
+        // console.log(`Success: Found product for slug "${slug}" with URI: ${uri}`);
+        return product;
       }
     } catch (error) {
       console.error(`getProduct: Fetch failed for URI "${uri}".`, error);
-      // Don't re-throw here, allow the loop to continue.
     }
   }
 
   console.warn(
-    `getProduct: Failed to find product for slug "${slug}" (lang: "${lang}"). Tried URIs:`,
-    candidateURIs
+    `getProduct: Failed to find product for slug "${slug}" (lang: "${lang}").`
   );
   return null;
 }

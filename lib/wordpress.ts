@@ -184,7 +184,8 @@ export function mapLangToEnum(lang: string): string {
 }
 
 // --- EXISTING FETCHERS ---
-
+// BlOG fetcher 
+//get blog page data
 export async function getBlogPageData(lang: string) {
   const gqlLang = getGqlLang(lang);
   let targetUri = `/${lang}/blog/`;
@@ -222,6 +223,7 @@ export async function getBlogPageData(lang: string) {
   return data;
 }
 
+//get blog post
 export async function getBlogPost(lang: string, slug: string) {
   const gqlLang = getGqlLang(lang);
   const query = `
@@ -241,22 +243,193 @@ export async function getBlogPost(lang: string, slug: string) {
   const data = await fetchAPI(query, { variables: { slug, lang: gqlLang } });
   return data?.posts?.nodes?.[0] || null;
 }
+//get blog post by slug
+
+// lib/wordpress.ts
+
+// lib/wordpress.ts
+
+export async function getPostBySlug(slug: string, lang: string) {
+  const langEnum = mapLangToEnum(lang);
+  
+  const data = await fetchAPI(
+    `query PostBySlug($id: ID!, $idType: PostIdType!, $lang: LanguageCodeFilterEnum!) {
+      post(id: $id, idType: $idType) {
+        id
+        title
+        slug
+        content
+        excerpt
+        date
+        featuredImage {
+          node {
+            sourceUrl
+            altText
+            caption
+          }
+        }
+        categories {
+          nodes {
+            name
+            slug
+          }
+        }
+        author {
+          node {
+            name
+          }
+        }
+        tags {
+          nodes {
+            name
+            slug
+          }
+        }
+        # --- FIXED SEO BLOCK (Based on your Introspection) ---
+        seo {
+          title
+          description
+          canonicalUrl
+          focusKeywords
+          robots # Returns a list like ["index", "follow"]
+          openGraph {
+            title
+            description
+            url
+            siteName
+            locale
+            image {
+              url
+            }
+          }
+        }
+      }
+      # --- RELATED POSTS ---
+      posts(first: 3, where: { language: $lang, notIn: [$id] }) {
+        nodes {
+          id
+          title
+          slug
+          date
+          featuredImage {
+            node {
+              sourceUrl
+            }
+          }
+        }
+      }
+    }`,
+    { 
+      variables: { 
+        id: slug, 
+        idType: "SLUG", 
+        lang: langEnum 
+      } 
+    }
+  );
+
+  return { 
+    post: data?.post || null, 
+    relatedPosts: data?.posts?.nodes || [] 
+  };
+}
+
+// export async function getPostBySlug(slug: string, lang: string) {
+//   const langEnum = mapLangToEnum(lang);
+//   const data = await fetchAPI(
+//     `query PostBySlug($id: ID!, $idType: PostIdType!, $lang: LanguageCodeFilterEnum!) {
+//       post(id: $id, idType: $idType) {
+//         id title slug content date
+//         featuredImage { node { sourceUrl altText } }
+//         categories { nodes { name slug } }
+//         author { node { name } }
+//         tags { nodes { name slug } }
+//         seo {
+//           title
+//           description
+//           canonicalUrl
+//           focusKeywords
+//           metaRobotsNoindex
+//           metaRobotsNofollow
+//           opengraphTitle
+//           opengraphDescription
+//           opengraphUrl
+//           opengraphImage {
+//             sourceUrl
+//           }
+//           twitterTitle
+//           twitterDescription
+//           twitterImage {
+//             sourceUrl
+//           }
+//             twitterCard
+//         }
+//       }
+//       posts(first: 3, where: { language: $lang, notIn: [$id] }) {
+//         nodes {
+//           id title slug date
+//           featuredImage { node { sourceUrl } }
+//         }
+//       }
+//     }`,
+//     { variables: { id: slug, idType: "SLUG", lang: langEnum } }
+//   );
+//   return { post: data?.post, relatedPosts: data?.posts?.nodes || [] };
+// }
+
+
+//solutions
 
 export async function getSolutionBySlug(slug: string, lang: string) {
   const langEnum = mapLangToEnum(lang);
+
   const query = `
     query GetSolutionBySlug($slug: String!, $lang: LanguageCodeFilterEnum!) {
       solutions(where: { name: $slug, language: $lang }) {
         nodes {
-          id title slug content excerpt
-          featuredImage { node { sourceUrl altText } }
-          seo { title description }
+          id
+          title
+          slug
+          content
+          excerpt
+          featuredImage {
+            node {
+              sourceUrl
+              altText
+            }
+          }
+          # --- FIXED SEO BLOCK (Same as Blog/Product) ---
+          seo {
+            title
+            description
+            canonicalUrl
+            focusKeywords
+            robots
+            openGraph {
+              title
+              description
+              url
+              siteName
+              locale
+              image {
+                url
+              }
+            }
+          }
+          # --- Solution Meta ---
           solutionMeta {
             relatedProducts {
               nodes {
                 ... on Product {
-                  id title slug
-                  featuredImage { node { sourceUrl altText } }
+                  id
+                  title
+                  slug
+                  featuredImage {
+                    node {
+                      sourceUrl
+                      altText
+                    }
+                  }
                 }
               }
             }
@@ -265,6 +438,7 @@ export async function getSolutionBySlug(slug: string, lang: string) {
       }
     }
   `;
+
   const data = await fetchAPI(query, { variables: { slug, lang: langEnum } });
   return data?.solutions?.nodes?.[0] || null;
 }
@@ -335,29 +509,7 @@ export async function getProductsPageData(lang: string) {
   }
 }
 
-export async function getPostBySlug(slug: string, lang: string) {
-  const langEnum = mapLangToEnum(lang);
-  const data = await fetchAPI(
-    `query PostBySlug($id: ID!, $idType: PostIdType!, $lang: LanguageCodeFilterEnum!) {
-      post(id: $id, idType: $idType) {
-        id title slug content date
-        featuredImage { node { sourceUrl altText } }
-        categories { nodes { name slug } }
-        author { node { name } }
-        seo { title description }
-        tags { nodes { name slug } }
-      }
-      posts(first: 3, where: { language: $lang, notIn: [$id] }) {
-        nodes {
-          id title slug date
-          featuredImage { node { sourceUrl } }
-        }
-      }
-    }`,
-    { variables: { id: slug, idType: "SLUG", lang: langEnum } }
-  );
-  return { post: data?.post, relatedPosts: data?.posts?.nodes || [] };
-}
+
 
 // ==========================================
 // 3. FETCH SITE TRANSLATIONS (FINAL)
@@ -483,6 +635,63 @@ export async function fetchSiteTranslations(
     };
   } catch (error) {
     console.error("Error fetching translations:", error);
+    return null;
+  }
+}
+
+
+// SEO metadata
+
+export async function getSeoMetadata(uri: string) {
+  const query = `
+    query GetSeoData($uri: String!) {
+      nodeByUri(uri: $uri) {
+        ... on Page {
+          seo {
+            title
+            description
+            canonicalUrl
+            opengraphTitle
+            opengraphDescription
+            opengraphImage {
+              sourceUrl
+            }
+            twitterTitle
+            twitterDescription
+            twitterImage {
+              sourceUrl
+            }
+          }
+        }
+        ... on Post {
+          seo {
+            title
+            description
+            canonicalUrl
+            opengraphTitle
+            opengraphDescription
+            opengraphImage {
+              sourceUrl
+            }
+            twitterTitle
+            twitterDescription
+            twitterImage {
+              sourceUrl
+            }
+          }
+        }
+        # Add '... on Product' if you have a Product CPT with SEO enabled
+      }
+    }
+  `;
+
+  try {
+    const data = await fetchAPI(query, { variables: { uri } });
+
+    // Return the SEO object from whichever type was returned
+    return data?.nodeByUri?.seo || null;
+  } catch (error) {
+    console.error("Error fetching SEO metadata:", error);
     return null;
   }
 }

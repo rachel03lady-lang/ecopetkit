@@ -3,23 +3,50 @@ import ServicesGrid from "@/components/services/servicesGrid/ServicesGrid";
 import CaseStudy from "@/components/services/caseStudy/CaseStudy";
 import CustomizationTier from "@/components/services/customizationTier/CustomizationTier";
 import { getServicesPage } from "@/lib/getServicesPage";
+import { getSeoMetadata } from "@/lib/wordpress";
 import type { Metadata } from "next";
 
 type Props = {
   params: { lang: string };
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const page = await getServicesPage(params.lang);
+// 1. DYNAMIC METADATA FOR CONTACT PAGE
+export async function generateMetadata({ params }: { params: { lang: string } }): Promise<Metadata> {
+  // Define the URI for this specific page (match your WordPress slug)
+  const uri =
+    params.lang === "en-us" ? "/services/" : `/${params.lang}/services/`;
+  
+  const seo = await getSeoMetadata(uri);
+
+  // Fallback if WP data is missing
+  if (!seo) {
+    return {
+      title: "Services | EcoPetKit",
+      description:"All reliable services provided by the Ecopetkit team to contribute towards the Intelligent Pet Luxury.",
+    };
+  }
 
   return {
-    title: page?.seo?.title ?? "OEM / ODM Services",
-    description: page?.seo?.description ?? "",
-    alternates: page?.seo?.canonicalUrl
-      ? { canonical: page.seo.canonicalUrl }
-      : undefined,
+    title: seo.title,
+    description: seo.description,
+    alternates: { canonical: seo.canonicalUrl },
+    openGraph: {
+      title: seo.opengraphTitle || seo.title,
+      description: seo.opengraphDescription || seo.description,
+      url: seo.canonicalUrl,
+      images: seo.opengraphImage?.sourceUrl ? [{ url: seo.opengraphImage.sourceUrl }] : [],
+      locale: params.lang,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.twitterTitle || seo.title,
+      description: seo.twitterDescription || seo.description,
+      images: seo.twitterImage?.sourceUrl ? [seo.twitterImage.sourceUrl] : [],
+    },
   };
 }
+
 
 export default async function ServicesPage({ params }: Props) {
   // 1. Pass the dynamic language from URL

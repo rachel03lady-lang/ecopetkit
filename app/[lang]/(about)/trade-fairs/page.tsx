@@ -1,22 +1,49 @@
 import TradeFairs from "@/components/trade-fairs/TradeFairs";
 import { getTradeFairsPage } from "@/lib/getTradeFairsPage";
+import { getSeoMetadata } from "@/lib/wordpress";
 import type { Metadata } from "next";
+
 
 type Props = {
   params: { lang: string };
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const page = await getTradeFairsPage(params.lang);
+// 1. DYNAMIC METADATA FOR TRADE FAIRS PAGE
+export async function generateMetadata({ params }: { params: { lang: string } }): Promise<Metadata> {
+  // Define the URI for this specific page (match your WordPress slug)
+  const uri = `/${params.lang}/trade-fairs/`;
+  
+  const seo = await getSeoMetadata(uri);
+
+  // Fallback if WP data is missing
+  if (!seo) {
+    return {
+      title: "Trade Fairs | EcoPetKit",
+      description: "Meet the Ecopetkit team in person at global pet exhibitions.",
+    };
+  }
 
   return {
-    title: page?.seo?.title ?? "Trade Fairs",
-    description: page?.seo?.description ?? "",
-    alternates: page?.seo?.canonicalUrl
-      ? { canonical: page.seo.canonicalUrl }
-      : undefined,
+    title: seo.title,
+    description: seo.description,
+    alternates: { canonical: seo.canonicalUrl },
+    openGraph: {
+      title: seo.opengraphTitle || seo.title,
+      description: seo.opengraphDescription || seo.description,
+      url: seo.canonicalUrl,
+      images: seo.opengraphImage?.sourceUrl ? [{ url: seo.opengraphImage.sourceUrl }] : [],
+      locale: params.lang,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.twitterTitle || seo.title,
+      description: seo.twitterDescription || seo.description,
+      images: seo.twitterImage?.sourceUrl ? [seo.twitterImage.sourceUrl] : [],
+    },
   };
 }
+
 
 export default async function TradeFairsPage({ params }: Props) {
   // 1. Pass dynamic language

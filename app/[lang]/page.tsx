@@ -7,6 +7,7 @@ import HomeFactoryHighlight from "@/components/home/manufacturingScale/HomeFacto
 import HomeLatestNews from "@/components/home/latestNews/HomeLatestNews";
 import HomeCTA from "@/components/home/homeCTA/HomeCTA";
 import { getHomePage } from "@/lib/getHomePage";
+import { getSeoMetadata } from "@/lib/wordpress"; // Import the new function
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -14,15 +15,42 @@ type Props = {
   params: { lang: string };
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const page = await getHomePage(params.lang);
+// 1. GENERATE METADATA (Server Side)
+export async function generateMetadata({ params }: { params: { lang: string } }): Promise<Metadata> {
+  const uri = `/${params.lang}/home`;
+  const seo = await getSeoMetadata(uri);
+
+  if (!seo) {
+    return {
+      title: "EcoPetKit | Smart Pet Care Solutions",
+      description: "Leading OEM/ODM manufacturer for smart pet feeders and fountains.",
+    };
+  }
 
   return {
-    title: page?.seo?.title ?? "ECOPETKIT",
-    description: page?.seo?.description ?? "",
-    alternates: page?.seo?.canonicalUrl
-      ? { canonical: page.seo.canonicalUrl }
-      : undefined,
+    title: seo.title,
+    description: seo.description,
+    alternates: {
+      canonical: seo.canonicalUrl,
+    },
+    openGraph: {
+      title: seo.opengraphTitle || seo.title,
+      description: seo.opengraphDescription || seo.description,
+      url: seo.canonicalUrl,
+      images: seo.opengraphImage?.sourceUrl
+        ? [{ url: seo.opengraphImage.sourceUrl }]
+        : [],
+      locale: params.lang,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.twitterTitle || seo.title,
+      description: seo.twitterDescription || seo.description,
+      images: seo.twitterImage?.sourceUrl
+        ? [seo.twitterImage.sourceUrl]
+        : [],
+    },
   };
 }
 

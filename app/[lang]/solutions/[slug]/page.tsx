@@ -4,26 +4,77 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
+import { getProductsOverview } from "@/lib/getProductsOverview";
+import GetAQuoteForm from "@/components/solutions/GetAQuoteForm";
 
 type Props = {
   params: { lang: string; slug: string };
 };
 
+// 1. DYNAMIC METADATA
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  // FIX: Pass params.lang
-  const post = await getSolutionBySlug(params.slug, params.lang);
-  if (!post) return {};
+  const solution = await getSolutionBySlug(params.slug, params.lang);
+
+  if (!solution) return {};
+
+  const seo = solution.seo || {};
+  const og = seo.openGraph || {};
+
+  // Robots Logic
+  const robotsArray = seo.robots || [];
+  const isNoIndex = robotsArray.includes("noindex");
+  const isNoFollow = robotsArray.includes("nofollow");
+
+  // Fallback Values
+  const title = seo.title || solution.title;
+  const description =
+    seo.description || solution.excerpt?.replace(/<[^>]+>/g, "") || "";
+  const imageUrl = og.image?.url || solution.featuredImage?.node?.sourceUrl;
 
   return {
-    title: post.seo?.title || post.title,
-    description:
-      post.seo?.description || post.excerpt?.replace(/<[^>]+>/g, "") || "",
+    title: title,
+    description: description,
+    alternates: {
+      canonical: seo.canonicalUrl,
+    },
+    robots: {
+      index: !isNoIndex,
+      follow: !isNoFollow,
+      googleBot: {
+        index: !isNoIndex,
+        follow: !isNoFollow,
+      },
+    },
+    openGraph: {
+      title: og.title || title,
+      description: og.description || description,
+      url: og.url || seo.canonicalUrl,
+      siteName: og.siteName || "EcoPetKit",
+      locale: og.locale || params.lang,
+      type: "website",
+      images: imageUrl
+        ? [
+            {
+              url: imageUrl,
+              alt: solution.featuredImage?.node?.altText || title,
+            },
+          ]
+        : [],
+    },
+    // Twitter Fallback
+    twitter: {
+      card: "summary_large_image",
+      title: og.title || title,
+      description: og.description || description,
+      images: imageUrl ? [imageUrl] : [],
+    },
   };
 }
 
 export default async function SingleSolutionPage({ params }: Props) {
-  // FIX: Pass params.lang here too
   const solution = await getSolutionBySlug(params.slug, params.lang);
+  const productsData = await getProductsOverview(params.lang);
+  const products = productsData?.products || [];
 
   if (!solution) notFound();
 
@@ -84,7 +135,7 @@ export default async function SingleSolutionPage({ params }: Props) {
             {relatedProducts.length > 0 && (
               <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 sticky top-24">
                 <h3 className="font-bold text-xl mb-6 flex items-center gap-2">
-                  Recommended Gear
+                  Recommended Products
                 </h3>
                 <div className="space-y-4">
                   {relatedProducts.map((prod: any) => (
@@ -117,6 +168,8 @@ export default async function SingleSolutionPage({ params }: Props) {
               </div>
             )}
 
+             <GetAQuoteForm products={products} />
+
             {/* WIDGET: Contact / CTA */}
             <div className="bg-slate-900 p-8 rounded-xl text-white text-center">
               <h3 className="font-bold text-lg mb-2">
@@ -133,6 +186,7 @@ export default async function SingleSolutionPage({ params }: Props) {
               </Link>
             </div>
           </aside>
+          
         </div>
       </div>
     </article>

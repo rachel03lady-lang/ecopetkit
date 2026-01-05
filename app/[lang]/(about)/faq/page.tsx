@@ -1,20 +1,45 @@
 import { getFaqPage } from "@/lib/getFaqPage";
 import GeneralFaq from "@/components/faq/GeneralFaq";
+import { getSeoMetadata } from "@/lib/wordpress";
 import type { Metadata } from "next";
 
 type Props = {
   params: { lang: string };
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const page = await getFaqPage(params.lang);
+// 1. DYNAMIC METADATA FOR  PAGE
+export async function generateMetadata({ params }: { params: { lang: string } }): Promise<Metadata> {
+  // Define the URI for this specific page (match your WordPress slug)
+  const uri = `/${params.lang}/faq/`;
+  
+  const seo = await getSeoMetadata(uri);
+
+  // Fallback if WP data is missing
+  if (!seo) {
+    return {
+      title: "Frequently Asked Questions | EcoPetKit",
+      description: "Read all Frequently Asked Questions on Ecopetkit Itelligent Pet Luxury",
+    };
+  }
 
   return {
-    title: page?.seo?.title ?? "Frequently Asked Questions",
-    description: page?.seo?.description ?? "",
-    alternates: page?.seo?.canonicalUrl
-      ? { canonical: page.seo.canonicalUrl }
-      : undefined,
+    title: seo.title,
+    description: seo.description,
+    alternates: { canonical: seo.canonicalUrl },
+    openGraph: {
+      title: seo.opengraphTitle || seo.title,
+      description: seo.opengraphDescription || seo.description,
+      url: seo.canonicalUrl,
+      images: seo.opengraphImage?.sourceUrl ? [{ url: seo.opengraphImage.sourceUrl }] : [],
+      locale: params.lang,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.twitterTitle || seo.title,
+      description: seo.twitterDescription || seo.description,
+      images: seo.twitterImage?.sourceUrl ? [seo.twitterImage.sourceUrl] : [],
+    },
   };
 }
 

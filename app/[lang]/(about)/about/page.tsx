@@ -10,6 +10,7 @@ import {
   AboutCTA,
 } from "@/components/about";
 import { getAboutPage } from "@/lib/getAboutPage";
+import { getSeoMetadata } from "@/lib/wordpress";
 import type { Metadata } from "next";
 
 // FIX 1: Add params type definition
@@ -17,14 +18,39 @@ type Props = {
   params: { lang: string };
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const page = await getAboutPage(params.lang);
+// 1. DYNAMIC METADATA FOR ABOUT PAGE
+export async function generateMetadata({ params }: { params: { lang: string } }): Promise<Metadata> {
+  // Define the URI for this specific page (match your WordPress slug)
+  const uri = `/${params.lang}/about/`;
+  
+  const seo = await getSeoMetadata(uri);
+
+  // Fallback if WP data is missing
+  if (!seo) {
+    return {
+      title: "About Us | EcoPetKit",
+      description: "Learn about Ecopetkit and what all efforts we put in pet care products industry.",
+    };
+  }
+
   return {
-    title: page?.seo?.title ?? "About Us",
-    description: page?.seo?.description ?? "",
-    alternates: page?.seo?.canonicalUrl
-      ? { canonical: page.seo.canonicalUrl }
-      : undefined,
+    title: seo.title,
+    description: seo.description,
+    alternates: { canonical: seo.canonicalUrl },
+    openGraph: {
+      title: seo.opengraphTitle || seo.title,
+      description: seo.opengraphDescription || seo.description,
+      url: seo.canonicalUrl,
+      images: seo.opengraphImage?.sourceUrl ? [{ url: seo.opengraphImage.sourceUrl }] : [],
+      locale: params.lang,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.twitterTitle || seo.title,
+      description: seo.twitterDescription || seo.description,
+      images: seo.twitterImage?.sourceUrl ? [seo.twitterImage.sourceUrl] : [],
+    },
   };
 }
 
