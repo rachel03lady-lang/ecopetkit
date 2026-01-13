@@ -651,15 +651,17 @@ export async function getSeoMetadata(uri: string) {
             title
             description
             canonicalUrl
-            opengraphTitle
-            opengraphDescription
-            opengraphImage {
-              sourceUrl
-            }
-            twitterTitle
-            twitterDescription
-            twitterImage {
-              sourceUrl
+            focusKeywords
+            robots
+            openGraph {
+              title
+              description
+              url
+              siteName
+              locale
+              image {
+                url
+              }
             }
           }
         }
@@ -668,19 +670,22 @@ export async function getSeoMetadata(uri: string) {
             title
             description
             canonicalUrl
-            opengraphTitle
-            opengraphDescription
-            opengraphImage {
-              sourceUrl
-            }
-            twitterTitle
-            twitterDescription
-            twitterImage {
-              sourceUrl
+            focusKeywords
+            robots
+            openGraph {
+              title
+              description
+              url
+              siteName
+              locale
+              image {
+                url
+              }
             }
           }
         }
-        # Add '... on Product' if you have a Product CPT with SEO enabled
+        # If you have an archive page for products that is actually a "Page" type, the above covers it.
+        # If it's a "Product" type, add "... on Product { seo { ... } }" with the same fields.
       }
     }
   `;

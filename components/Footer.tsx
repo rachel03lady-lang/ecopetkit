@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Linkedin, Facebook, Instagram } from "lucide-react";
 import { useLanguage } from "@/app/providers/LanguageProvider";
+import Newsletter from "@/components/Newsletter";
 
 // Custom Icon Component
 const TikTokIcon = ({
@@ -103,7 +104,8 @@ export default function Footer() {
           </div>
 
           {/* NEWSLETTER COLUMN */}
-          <div>
+          <Newsletter footer={footer} />
+          {/* <div>
             <h4 className="font-bold mb-6">{footer.footerNewsletter}</h4>
             <p className="text-slate-400 text-sm mb-4">
               {footer.footerNewsletterDescription}
@@ -118,7 +120,7 @@ export default function Footer() {
                 {footer.footerNewsletterCtaLabel}
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* BOTTOM BAR */}

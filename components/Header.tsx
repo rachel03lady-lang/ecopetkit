@@ -275,27 +275,110 @@ export default function Header() {
       {/* MOBILE MENU */}
       {isMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white shadow-lg py-6 px-6 border-t border-slate-100">
-          {/* ... Search ... */}
+          {/* Search Bar */}
+          <div className="relative w-full mb-4">
+            <input
+              type="text"
+              placeholder={ui?.searchPlaceholder || "Search..."}
+              className="w-full py-2 pl-10 pr-4 rounded-full text-sm outline-none bg-slate-100 text-primary focus:bg-white focus:ring-2 focus:ring-slate-900"
+              value={globalSearchQuery}
+              onChange={(e) => setGlobalSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  router.push(`/${language}/products`);
+                  setIsMenuOpen(false);
+                }
+              }}
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          </div>
 
           <div className="flex flex-col gap-3">
-            {/* ... Nav Items ... */}
+            {navItems.map((item: any) => (
+              <div key={item.id}>
+                {item.hasChildren ? (
+                  <>
+                    <button
+                      onClick={() =>
+                        setActiveDropdown(
+                          activeDropdown === item.id ? null : item.id
+                        )
+                      }
+                      className="w-full flex justify-between items-center py-2 text-primary font-medium"
+                    >
+                      {item.label}
+                      <ChevronDown
+                        size={16}
+                        className={`transition-transform ${
+                          activeDropdown === item.id ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+                    {activeDropdown === item.id && (
+                      <div className="pl-4 mt-2 flex flex-col gap-2">
+                        {item.children?.map((child: any) => (
+                          <Link
+                            key={child.id}
+                            href={child.href?.uri || "#"}
+                            className="block py-1 text-slate-600 hover:text-accent"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Link
+                    href={item.href?.uri || "#"}
+                    className="block py-2 text-primary font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                )}
+              </div>
+            ))}
 
             {/* Mobile Lang Switcher */}
-            <div className="flex gap-3 mt-3">
-              {Object.keys(LANG_LABELS).map((langKey) => (
-                <button
-                  key={langKey}
-                  onClick={() => handleLanguageSwitch(langKey)}
-                  className={`px-3 py-1 rounded-md text-sm ${
-                    language === langKey
-                      ? "bg-primary text-white"
-                      : "bg-slate-100 text-secondary"
-                  }`}
-                >
-                  {langKey.toUpperCase()}
-                </button>
-              ))}
+            <div className="border-t border-slate-200 mt-4 pt-4">
+              <p className="text-sm font-medium text-slate-500 mb-2">
+                Language
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {Object.keys(LANG_LABELS).map((langKey) => (
+                  <button
+                    key={langKey}
+                    onClick={() => handleLanguageSwitch(langKey)}
+                    className={`px-3 py-1 rounded-md text-sm ${
+                      language === langKey
+                        ? "bg-primary text-white"
+                        : "bg-slate-100 text-secondary"
+                    }`}
+                  >
+                    {LANG_LABELS[langKey]}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* CTA Button */}
+            {ui?.navigationCta && (
+              <div className="mt-6">
+                <Button
+                  size="lg"
+                  variant="primary"
+                  className="w-full"
+                  onClick={() => {
+                    router.push(ui.navigationCta.ctaUrl || "/contact");
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  {ui.navigationCta.ctaLabel || "Get Quote"}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}
