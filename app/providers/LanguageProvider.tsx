@@ -1,85 +1,92 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import { fetchSiteTranslations } from "@/lib/wordpress";
 
-// Helper to extract language from pathname
-const getLangFromPathname = (pathname: string): string => {
-  const segments = pathname.split("/").filter(Boolean);
-  if (segments.length > 0) {
-    // Check for 2-letter codes or specific 'en-us'
-    if (segments[0].length === 2 || segments[0] === "en-us") {
-      return segments[0];
-    }
-  }
-  return "en-us"; // Default fallback (matches your folder structure)
+// 1. Define the Shape of your UI Data
+type UiData = {
+  navigationMenu?: any[];
+  footer?: any;
+  brandName?: string;
+  searchPlaceholder?: string;
+  navigationCta?: {
+    ctaLabel?: string;
+    ctaUrl?: string;
+  };
 };
 
-interface LanguageContextType {
-  language: string;
-  setLanguage: (lang: string) => void; // Added missing function
-  t: (key: string) => string; // Added missing helper
-  ui: any | null;
-  loading: boolean;
-}
-
-const LanguageContext = createContext<LanguageContextType>({
-  language: "en-us",
-  setLanguage: () => {},
-  t: (key) => key,
-  ui: null,
-  loading: true,
-});
-
-export const LanguageProvider = ({
-  children,
-}: {
+// 2. Add 'initialUI' and 'lang' to Props
+type LanguageProviderProps = {
   children: React.ReactNode;
-}) => {
-  const pathname = usePathname();
-  const [language, setLanguage] = useState<string>(
-    getLangFromPathname(pathname)
-  );
-  const [ui, setUi] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
+  lang?: string; // Passed from layout
+  initialUI?: UiData | null; // Passed from layout (Server Data)
+};
 
-  // 1. Sync State with URL
-  // When user navigates (e.g. router.push), this updates the language state automatically
-  useEffect(() => {
-    const currentLang = getLangFromPathname(pathname);
-    setLanguage(currentLang);
-  }, [pathname]);
+type LanguageContextType = {
+  language: string;
+  setLanguage: (lang: string) => void;
+  ui: UiData | null;
+  loading: boolean;
+};
 
-  // 2. Fetch Data when Language Changes
+const LanguageContext = createContext<LanguageContextType | undefined>(
+  undefined
+);
+
+export function LanguageProvider({
+  children,
+  lang = "en-us",
+  initialUI = null, // Default to null if not passed
+}: LanguageProviderProps) {
+  const [language, setLanguage] = useState(lang);
+
+  // 3. Initialize state with Server Data (Instant Load!)
+  const [ui, setUi] = useState<UiData | null>(initialUI);
+
+  // If we have initialUI, we are not loading. Otherwise, we are.
+  const [loading, setLoading] = useState(!initialUI);
+
+  // OPTIONAL: Only fetch on client if we somehow didn't get server data
+  // or if language changes significantly on client-side (SPA navigation)
   useEffect(() => {
-    const loadTranslations = async () => {
-      setLoading(true);
+    // If we already have UI data matching the current lang, don't re-fetch
+    if (ui && language === lang) return;
+
+    let isMounted = true;
+
+    async function loadTranslations() {
       try {
-        const translations = await fetchSiteTranslations(language);
-        setUi(translations);
+        setLoading(true);
+        console.log(`[Client] Fetching translations for: ${language}`);
+        const data = await fetchSiteTranslations(language);
+        if (isMounted) {
+          setUi(data);
+          setLoading(false);
+        }
       } catch (error) {
-        console.error(
-          `Failed to load site translations for lang: ${language}`,
-          error
-        );
-        setUi(null);
-      } finally {
-        setLoading(false);
+        console.error("Failed to load translations", error);
+        if (isMounted) setLoading(false);
       }
-    };
+    }
 
     loadTranslations();
-  }, [language]);
 
-  // Dummy translator helper to prevent crashes if used
-  const t = (key: string) => key;
+    return () => {
+      isMounted = false;
+    };
+  }, [language, lang, ui]); // Dependencies
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, ui, loading }}>
+    <LanguageContext.Provider value={{ language, setLanguage, ui, loading }}>
       {children}
     </LanguageContext.Provider>
   );
-};
+}
 
-export const useLanguage = () => useContext(LanguageContext);
+export function useLanguage() {
+  const context = useContext(LanguageContext);
+  if (context === undefined) {
+    throw new Error("useLanguage must be used within a LanguageProvider");
+  }
+  return context;
+}

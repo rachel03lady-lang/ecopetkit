@@ -1,0 +1,118 @@
+import { fetchAPI } from "./wordpress.ts.bak";
+
+// --- DATA MAPPER (The Bridge) ---
+// This aligns with your query fields: 'href' and 'label'
+function mapMenuData(menuItems: any[]): any {
+  if (!Array.isArray(menuItems)) return [];
+
+  return menuItems.map((item: any) => {
+    // FIX: Look for 'href', because that is what you named it in the query
+    const linkedNode = item.href?.nodes?.[0];
+
+    return {
+      id: item.id || Math.random().toString(),
+      label: item.label, // Matches your query field 'label'
+      href: linkedNode ? { uri: linkedNode.uri } : null, // Flattened for Header.tsx
+      hasChildren: !!item.hasChildren,
+      children: item.children ? mapMenuData(item.children) : [],
+    };
+  });
+}
+
+export async function fetchSiteTranslations(lang: string) {
+  const isEnglish = lang === "en" || lang === "en-us";
+  const uri = isEnglish ? "/site-translations/" : `/${lang}/site-translations/`;
+
+  const data = await fetchAPI(
+    `query FetchSiteTranslations($uri: ID!) {
+      page(id: $uri, idType: URI) {
+        id
+        siteTranslations {
+          brandName
+          searchPlaceholder
+          navigationMenu {
+            id
+            hasChildren
+            label
+            href {
+              nodes {
+                ... on Page { uri }
+                ... on Post { uri }
+                ... on Solution { uri }
+              }
+            }
+            children {
+              id
+              label
+              href {
+                nodes {
+                  ... on Page { uri }
+                  ... on Post { uri }
+                  ... on Solution { uri }
+                }
+              }
+            }
+          }
+          footer {
+            footerBrandName
+            footerBandDescription
+            footerProductTitle
+            footerProductsCategories {
+              nodes {
+                ... on ProductCategory {
+                  name
+                  slug
+                }
+              }
+            }
+            footerCompanyTitle
+            footerCompany {
+              companyRelatedPage { 
+                nodes {
+                  ... on Page { 
+                    title
+                    uri 
+                  }
+                }
+              }
+            }
+            footerNewsletter
+            footerNewsletterDescription
+            footerNewsletterCtaPlaceholder
+            footerNewsletterCtaLabel
+          }
+          navigationCta {
+            ctaLabel
+            ctaUrl {
+              nodes {
+                ... on Page { uri }
+                ... on Post { uri }
+              }
+            }
+          }
+        }
+      }
+    }`,
+    {
+      variables: { uri },
+      next: { revalidate: 3600, tags: ["site-layout"] },
+    },
+  );
+
+  const raw = data?.page?.siteTranslations;
+
+  if (!raw) return null;
+
+  // --- RETURN TRANSFORMED DATA ---
+  return {
+    ...raw,
+    // 1. Map the navigation menu
+    navigationMenu: mapMenuData(raw.navigationMenu),
+
+    // 2. FIX: Align CTA mapping with your query fields (ctaLabel and ctaUrl)
+    navigationCta: {
+      ctaLabel: raw.navigationCta?.ctaLabel,
+      ctaUrl: raw.navigationCta?.ctaUrl?.nodes?.[0]?.uri || "/contact",
+    },
+  };
+}

@@ -2,12 +2,25 @@ import { gql } from "graphql-request";
 
 const WP_API_URL = process.env.NEXT_PUBLIC_WP_GRAPHQL_URL;
 
-// --- HELPER: Map 'en-us' to 'EN_US' for GraphQL ---
+// ==========================================
+// 1. HELPERS & UTILS
+// ==========================================
+
+function getApiUrl() {
+  if (!WP_API_URL) {
+    throw new Error(
+      "NEXT_PUBLIC_WP_GRAPHQL_URL is not defined in your .env.local file.",
+    );
+  }
+  return WP_API_URL.endsWith("/") ? WP_API_URL.slice(0, -1) : WP_API_URL;
+}
+
+// Helper: Map 'en-us' to 'EN_US' for GraphQL (Used by Blog fetchers)
 function getGqlLang(lang: string) {
   if (typeof lang !== "string") {
     console.warn(
       "[getGqlLang] Received non-string lang, defaulting to EN-US:",
-      lang
+      lang,
     );
     return "EN-US";
   }
@@ -21,18 +34,20 @@ function getGqlLang(lang: string) {
   return map[lang.toLowerCase()] || "EN-US";
 }
 
-function getApiUrl() {
-  if (!WP_API_URL) {
-    throw new Error(
-      "NEXT_PUBLIC_WP_GRAPHQL_URL is not defined in your .env.local file."
-    );
-  }
-  return WP_API_URL.endsWith("/") ? WP_API_URL.slice(0, -1) : WP_API_URL;
+// Helper: Map lang to Enum (Used by Post/Solution fetchers)
+export function mapLangToEnum(lang: string): string {
+  if (!lang) return "EN-US";
+  const langLower = lang.toLowerCase();
+  if (langLower === "en" || langLower === "en-us") return "EN-US";
+  if (langLower === "de") return "DE";
+  if (langLower === "fr") return "FR";
+  if (langLower === "es") return "ES";
+  return "EN-US";
 }
 
 export async function fetchAPI(
   query: string,
-  { variables }: { variables?: any } = {}
+  { variables, next }: { variables?: any; next?: RequestInit["next"] } = {},
 ) {
   const headers = { "Content-Type": "application/json" };
   const apiUrl = getApiUrl();
@@ -42,7 +57,8 @@ export async function fetchAPI(
       method: "POST",
       headers,
       body: JSON.stringify({ query, variables }),
-      cache: "no-store",
+      // Default to no-store if next config isn't provided (Dev mode safe)
+      ...(next ? { next } : { cache: "no-store" }),
     });
 
     const json = await res.json();
@@ -60,28 +76,15 @@ export async function fetchAPI(
 }
 
 // ==========================================
-// 1. CLEAN INTERFACES (Used by Components)
+// 2. INTERFACES
 // ==========================================
-
-export interface LinkObj {
-  uri: string;
-  title?: string;
-  target?: string;
-}
 
 export interface NavigationItem {
   id: string;
   label: string;
   hasChildren: boolean;
-  href?: LinkObj | null;
+  href?: { uri: string } | null;
   children?: NavigationItem[];
-}
-
-export interface FooterProduct {
-  id?: string;
-  name: string;
-  slug: string;
-  uri: string;
 }
 
 export interface SiteTranslations {
@@ -96,13 +99,17 @@ export interface SiteTranslations {
     footerBrandName: string;
     footerBandDescription: string;
     footerProductTitle: string;
+    // CORRECTED: Nested footerProduct structure
     footerProductsCategories: {
-      footerProduct: FooterProduct[];
+      footerProduct: {
+        name: string;
+        slug: string;
+        uri: string;
+      }[];
     }[];
     footerCompanyTitle: string;
-    // FIX: Updated to hold a list of links (LinkObj[]) since you selected multiple pages
     footerCompany: {
-      companyLinks: LinkObj[];
+      companyLinks: { title: string; uri: string }[];
     };
     footerNewsletter: string;
     footerNewsletterDescription: string;
@@ -112,80 +119,142 @@ export interface SiteTranslations {
 }
 
 // ==========================================
-// 2. RAW INTERFACES (Matching Your Query Output)
+// 3. DATA MAPPING HELPERS
 // ==========================================
 
-interface AcfConnection<T> {
-  nodes: T[];
-}
+// Recursive Mapper for Navigation Menu
+function mapMenuData(menuItems: any[]): NavigationItem[] {
+  if (!Array.isArray(menuItems)) return [];
 
-interface RawNavigationItem {
-  id: string;
-  label: string;
-  hasChildren: boolean;
-  href?: AcfConnection<{ uri: string }>;
-  children?: RawNavigationItem[];
-}
+  return menuItems.map((item: any) => {
+    // Correctly accessing the Relationship field nodes
+    const linkedNode = item.href?.nodes?.[0];
 
-interface RawFooterProduct {
-  footerProduct: AcfConnection<{
-    id?: string;
-    name: string;
-    slug: string;
-    uri: string;
-  }>;
-}
-
-// FIX: Matches your new One-to-Many output
-interface RawFooterCompanyRow {
-  companyRelatedPage?: {
-    nodes: {
-      title: string;
-      uri: string;
-    }[];
-  };
-}
-
-interface RawSiteTranslations {
-  page: {
-    siteTranslations: {
-      brandName: string;
-      searchPlaceholder: string;
-      navigationCta: {
-        ctaLabel: string;
-        ctaUrl: string;
-      };
-      navigationMenu: RawNavigationItem[];
-      footer: {
-        footerBrandName: string;
-        footerBandDescription: string;
-        footerProductTitle: string;
-        footerProductsCategories: RawFooterProduct[];
-        footerCompanyTitle: string;
-        // FIX: Array of rows, each containing a list of nodes
-        footerCompany: RawFooterCompanyRow[];
-        footerNewsletter: string;
-        footerNewsletterDescription: string;
-        footerNewsletterCtaPlaceholder: string;
-        footerNewsletterCtaLabel: string;
-      };
+    return {
+      id: item.id || Math.random().toString(),
+      label: item.label,
+      // Map 'href.nodes[0]' -> 'href.uri'
+      href: linkedNode ? { uri: linkedNode.uri } : null,
+      hasChildren: !!item.hasChildren,
+      children: item.children ? mapMenuData(item.children) : [],
     };
-  };
+  });
 }
 
-export function mapLangToEnum(lang: string): string {
-  if (!lang) return "EN-US";
-  const langLower = lang.toLowerCase();
-  if (langLower === "en" || langLower === "en-us") return "EN-US";
-  if (langLower === "de") return "DE";
-  if (langLower === "fr") return "FR";
-  if (langLower === "es") return "ES";
-  return "EN-US";
+// ==========================================
+// 4. SITE TRANSLATIONS FETCHER (The Fix)
+// ==========================================
+
+export async function fetchSiteTranslations(
+  lang: string,
+): Promise<SiteTranslations | null> {
+  const isEnglish = lang === "en" || lang === "en-us";
+  const uri = isEnglish ? "/site-translations/" : `/${lang}/site-translations/`;
+
+  const query = `
+    query FetchSiteTranslations($uri: ID!) {
+      page(id: $uri, idType: URI) {
+        siteTranslations {
+          brandName
+          searchPlaceholder
+          
+          # --- Navigation ---
+          navigationMenu {
+            id
+            hasChildren
+            label
+            href { nodes { ... on Page { uri } ... on Post { uri } ... on Solution { uri } } }
+            children {
+              id
+              label
+              href { nodes { ... on Page { uri } ... on Post { uri } ... on Solution { uri } } }
+            }
+          }
+          
+          # --- CTA ---
+          navigationCta {
+            ctaLabel
+            ctaUrl
+          }
+          
+          # --- Footer ---
+          footer {
+            footerBrandName
+            footerBandDescription
+            footerProductTitle
+            
+            # CORRECTED: Nested Query for Footer Products
+            footerProductsCategories {
+              footerProduct {
+                nodes { ... on ProductCategory { name slug uri } }
+              }
+            }
+            
+            footerCompanyTitle
+            footerCompany {
+              companyRelatedPage {
+                nodes { ... on Page { title uri } }
+              }
+            }
+            
+            footerNewsletter
+            footerNewsletterDescription
+            footerNewsletterCtaPlaceholder
+            footerNewsletterCtaLabel
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await fetchAPI(query, {
+      variables: { uri },
+      // Optimization: Cache this heavily
+      next: { revalidate: 3600, tags: ["site-layout"] },
+    });
+
+    const raw = data?.page?.siteTranslations;
+    if (!raw) return null;
+
+    return {
+      brandName: raw.brandName,
+      searchPlaceholder: raw.searchPlaceholder,
+
+      // 1. Run the Mapper for Menu
+      navigationMenu: mapMenuData(raw.navigationMenu),
+
+      // 2. Flatten CTA URL
+      navigationCta: {
+        ctaLabel: raw.navigationCta?.ctaLabel,
+        ctaUrl: raw.navigationCta?.ctaUrl?.nodes?.[0]?.uri || "/contact",
+      },
+
+      // 3. Map Footer Data
+      footer: {
+        ...raw.footer,
+        // Map the nested footerProduct nodes
+        footerProductsCategories:
+          raw.footer.footerProductsCategories?.map((item: any) => ({
+            footerProduct: item.footerProduct?.nodes || [],
+          })) || [],
+        // Map the company links
+        footerCompany: {
+          companyLinks:
+            raw.footer.footerCompany?.[0]?.companyRelatedPage?.nodes || [],
+        },
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching translations:", error);
+    return null;
+  }
 }
 
-// --- EXISTING FETCHERS ---
-// BlOG fetcher 
-//get blog page data
+// ==========================================
+// 5. EXISTING FETCHERS (Blogs, Posts, Solutions)
+// ==========================================
+
 export async function getBlogPageData(lang: string) {
   const gqlLang = getGqlLang(lang);
   let targetUri = `/${lang}/blog/`;
@@ -223,7 +292,6 @@ export async function getBlogPageData(lang: string) {
   return data;
 }
 
-//get blog post
 export async function getBlogPost(lang: string, slug: string) {
   const gqlLang = getGqlLang(lang);
   const query = `
@@ -243,194 +311,41 @@ export async function getBlogPost(lang: string, slug: string) {
   const data = await fetchAPI(query, { variables: { slug, lang: gqlLang } });
   return data?.posts?.nodes?.[0] || null;
 }
-//get blog post by slug
-
-// lib/wordpress.ts
-
-// lib/wordpress.ts
 
 export async function getPostBySlug(slug: string, lang: string) {
   const langEnum = mapLangToEnum(lang);
-  
   const data = await fetchAPI(
     `query PostBySlug($id: ID!, $idType: PostIdType!, $lang: LanguageCodeFilterEnum!) {
       post(id: $id, idType: $idType) {
-        id
-        title
-        slug
-        content
-        excerpt
-        date
-        featuredImage {
-          node {
-            sourceUrl
-            altText
-            caption
-          }
-        }
-        categories {
-          nodes {
-            name
-            slug
-          }
-        }
-        author {
-          node {
-            name
-          }
-        }
-        tags {
-          nodes {
-            name
-            slug
-          }
-        }
-        # --- FIXED SEO BLOCK (Based on your Introspection) ---
-        seo {
-          title
-          description
-          canonicalUrl
-          focusKeywords
-          robots # Returns a list like ["index", "follow"]
-          openGraph {
-            title
-            description
-            url
-            siteName
-            locale
-            image {
-              url
-            }
-          }
-        }
+        id title slug content excerpt date
+        featuredImage { node { sourceUrl altText caption } }
+        categories { nodes { name slug } }
+        author { node { name } }
+        tags { nodes { name slug } }
+        seo { title description canonicalUrl focusKeywords robots openGraph { title description url siteName locale image { url } } }
       }
-      # --- RELATED POSTS ---
       posts(first: 3, where: { language: $lang, notIn: [$id] }) {
-        nodes {
-          id
-          title
-          slug
-          date
-          featuredImage {
-            node {
-              sourceUrl
-            }
-          }
-        }
+        nodes { id title slug date featuredImage { node { sourceUrl } } }
       }
     }`,
-    { 
-      variables: { 
-        id: slug, 
-        idType: "SLUG", 
-        lang: langEnum 
-      } 
-    }
+    { variables: { id: slug, idType: "SLUG", lang: langEnum } },
   );
 
-  return { 
-    post: data?.post || null, 
-    relatedPosts: data?.posts?.nodes || [] 
-  };
+  return { post: data?.post || null, relatedPosts: data?.posts?.nodes || [] };
 }
-
-// export async function getPostBySlug(slug: string, lang: string) {
-//   const langEnum = mapLangToEnum(lang);
-//   const data = await fetchAPI(
-//     `query PostBySlug($id: ID!, $idType: PostIdType!, $lang: LanguageCodeFilterEnum!) {
-//       post(id: $id, idType: $idType) {
-//         id title slug content date
-//         featuredImage { node { sourceUrl altText } }
-//         categories { nodes { name slug } }
-//         author { node { name } }
-//         tags { nodes { name slug } }
-//         seo {
-//           title
-//           description
-//           canonicalUrl
-//           focusKeywords
-//           metaRobotsNoindex
-//           metaRobotsNofollow
-//           opengraphTitle
-//           opengraphDescription
-//           opengraphUrl
-//           opengraphImage {
-//             sourceUrl
-//           }
-//           twitterTitle
-//           twitterDescription
-//           twitterImage {
-//             sourceUrl
-//           }
-//             twitterCard
-//         }
-//       }
-//       posts(first: 3, where: { language: $lang, notIn: [$id] }) {
-//         nodes {
-//           id title slug date
-//           featuredImage { node { sourceUrl } }
-//         }
-//       }
-//     }`,
-//     { variables: { id: slug, idType: "SLUG", lang: langEnum } }
-//   );
-//   return { post: data?.post, relatedPosts: data?.posts?.nodes || [] };
-// }
-
-
-//solutions
 
 export async function getSolutionBySlug(slug: string, lang: string) {
   const langEnum = mapLangToEnum(lang);
-
   const query = `
     query GetSolutionBySlug($slug: String!, $lang: LanguageCodeFilterEnum!) {
       solutions(where: { name: $slug, language: $lang }) {
         nodes {
-          id
-          title
-          slug
-          content
-          excerpt
-          featuredImage {
-            node {
-              sourceUrl
-              altText
-            }
-          }
-          # --- FIXED SEO BLOCK (Same as Blog/Product) ---
-          seo {
-            title
-            description
-            canonicalUrl
-            focusKeywords
-            robots
-            openGraph {
-              title
-              description
-              url
-              siteName
-              locale
-              image {
-                url
-              }
-            }
-          }
-          # --- Solution Meta ---
+          id title slug content excerpt featuredImage { node { sourceUrl altText } }
+          seo { title description canonicalUrl focusKeywords robots openGraph { title description url siteName locale image { url } } }
           solutionMeta {
             relatedProducts {
               nodes {
-                ... on Product {
-                  id
-                  title
-                  slug
-                  featuredImage {
-                    node {
-                      sourceUrl
-                      altText
-                    }
-                  }
-                }
+                ... on Product { id title slug featuredImage { node { sourceUrl altText } } }
               }
             }
           }
@@ -438,7 +353,6 @@ export async function getSolutionBySlug(slug: string, lang: string) {
       }
     }
   `;
-
   const data = await fetchAPI(query, { variables: { slug, lang: langEnum } });
   return data?.solutions?.nodes?.[0] || null;
 }
@@ -500,7 +414,7 @@ export async function getProductsPageData(lang: string) {
             seo { title description }
           }
         }`,
-      { variables: { uri } }
+      { variables: { uri } },
     );
     if (!data.page) return null;
     return data.page;
@@ -509,191 +423,22 @@ export async function getProductsPageData(lang: string) {
   }
 }
 
-
-
-// ==========================================
-// 3. FETCH SITE TRANSLATIONS (FINAL)
-// ==========================================
-
-const FETCH_SITE_TRANSLATIONS_QUERY = `
-  query FetchSiteTranslations($uri: ID!) {
-    page(id: $uri, idType: URI) {
-      id
-      siteTranslations {
-        brandName
-        searchPlaceholder
-        navigationCta { ctaLabel ctaUrl }
-        navigationMenu {
-          id label hasChildren
-          href { 
-            nodes {
-              ... on Page { uri } 
-              ... on Post { uri }
-            }
-          }
-          children {
-            id label
-            href { 
-              nodes {
-                ... on Page { uri } 
-                ... on Post { uri }
-              }
-            }
-          }
-        }
-        footer {
-          footerBrandName footerBandDescription footerProductTitle
-          footerProductsCategories {
-            footerProduct {
-              nodes {
-                ... on ProductCategory { id name slug uri }
-                ... on TermNode { name slug uri }
-              }
-            }
-          }
-          footerCompanyTitle
-          footerCompany {
-            companyRelatedPage {
-              nodes {
-                ... on Page {
-                  title
-                  uri
-                }
-              }
-            }
-          }
-          footerNewsletter footerNewsletterDescription footerNewsletterCtaPlaceholder footerNewsletterCtaLabel
-        }
-      }
-    }
-  }
-`;
-
-export async function fetchSiteTranslations(
-  lang: string
-): Promise<SiteTranslations | null> {
-  const variables = { uri: "/site-translations" };
-
-  try {
-    const data = await fetchAPI(FETCH_SITE_TRANSLATIONS_QUERY, { variables });
-    const rawData = data as RawSiteTranslations;
-
-    if (!rawData?.page?.siteTranslations) return null;
-    const rawTrans = rawData.page.siteTranslations;
-
-    // Helper for Navigation: Takes a Connection with nodes
-    const flattenNavHref = (connection?: AcfConnection<{ uri: string }>) => {
-      return connection?.nodes?.[0] ? { uri: connection.nodes[0].uri } : null;
-    };
-
-    // --- MAPPING LOGIC ---
-
-    // 1. Navigation Mapping
-    const cleanedMenu: NavigationItem[] =
-      rawTrans.navigationMenu?.map((item) => {
-        const mappedChildren: NavigationItem[] =
-          item.children?.map((child) => ({
-            id: child.id,
-            label: child.label,
-            hasChildren: false,
-            children: [],
-            href: flattenNavHref(child.href),
-          })) || [];
-
-        return {
-          id: item.id,
-          label: item.label,
-          hasChildren: item.hasChildren,
-          href: flattenNavHref(item.href),
-          children: mappedChildren,
-        };
-      }) || [];
-
-    // 2. Footer Products Mapping
-    const cleanedFooterProducts =
-      rawTrans.footer.footerProductsCategories?.map((cat) => ({
-        footerProduct: cat.footerProduct?.nodes || [],
-      })) || [];
-
-    // 3. Footer Company Mapping
-    // FIX: Get the first row, then get the list of nodes from that row
-    const firstCompanyRow = rawTrans.footer.footerCompany?.[0];
-    const companyLinksList = firstCompanyRow?.companyRelatedPage?.nodes || [];
-
-    return {
-      brandName: rawTrans.brandName,
-      searchPlaceholder: rawTrans.searchPlaceholder,
-      navigationCta: rawTrans.navigationCta,
-      navigationMenu: cleanedMenu,
-      footer: {
-        ...rawTrans.footer,
-        footerProductsCategories: cleanedFooterProducts,
-        footerCompany: {
-          companyLinks: companyLinksList, // Now returns the full array
-        },
-      },
-    };
-  } catch (error) {
-    console.error("Error fetching translations:", error);
-    return null;
-  }
-}
-
-
 // SEO metadata
-
 export async function getSeoMetadata(uri: string) {
   const query = `
     query GetSeoData($uri: String!) {
       nodeByUri(uri: $uri) {
         ... on Page {
-          seo {
-            title
-            description
-            canonicalUrl
-            focusKeywords
-            robots
-            openGraph {
-              title
-              description
-              url
-              siteName
-              locale
-              image {
-                url
-              }
-            }
-          }
+          seo { title description canonicalUrl focusKeywords robots openGraph { title description url siteName locale image { url } } }
         }
         ... on Post {
-          seo {
-            title
-            description
-            canonicalUrl
-            focusKeywords
-            robots
-            openGraph {
-              title
-              description
-              url
-              siteName
-              locale
-              image {
-                url
-              }
-            }
-          }
+          seo { title description canonicalUrl focusKeywords robots openGraph { title description url siteName locale image { url } } }
         }
-        # If you have an archive page for products that is actually a "Page" type, the above covers it.
-        # If it's a "Product" type, add "... on Product { seo { ... } }" with the same fields.
       }
     }
   `;
-
   try {
     const data = await fetchAPI(query, { variables: { uri } });
-
-    // Return the SEO object from whichever type was returned
     return data?.nodeByUri?.seo || null;
   } catch (error) {
     console.error("Error fetching SEO metadata:", error);

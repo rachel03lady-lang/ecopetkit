@@ -71,8 +71,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const product = await getProduct(params.lang, params.slug);
-
+  console.log("Featured Image =>", product.featuredImage?.node?.sourceUrl);
   if (!product) notFound();
 
-  return <ProductClient product={product} lang={params.lang} />;
+  //Create the JSON-LD object
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    image: product.featuredImage?.node?.sourceUrl,
+    description: product.seo?.description || product.productCoreInfo?.tagline,
+    brand: {
+      "@type": "Brand",
+      name: "EcoPetKit",
+    },
+  };
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProductClient product={product} lang={params.lang} />
+    </>
+  );
 }

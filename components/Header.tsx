@@ -254,7 +254,7 @@ export default function Header() {
             <Button
               size="sm"
               variant={scrolled || pathname !== "/" ? "primary" : "white"}
-              onClick={() => router.push(ui.navigationCta.ctaUrl || "/contact")}
+              onClick={() => router.push(ui.navigationCta?.ctaUrl || "/contact")}
             >
               {ui.navigationCta.ctaLabel || "Get Quote"}
             </Button>
@@ -371,7 +371,7 @@ export default function Header() {
                   variant="primary"
                   className="w-full"
                   onClick={() => {
-                    router.push(ui.navigationCta.ctaUrl || "/contact");
+                    router.push(ui.navigationCta?.ctaUrl || "/contact");
                     setIsMenuOpen(false);
                   }}
                 >
